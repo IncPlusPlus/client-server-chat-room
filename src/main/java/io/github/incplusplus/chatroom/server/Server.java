@@ -97,10 +97,10 @@ public class Server {
 				log("New client connected at " + connectionSocket.getLocalAddress()
 						+ ":" + connectionSocket.getLocalPort() + " Performing registration");
 				//welcome the client (not the user)
-				out.println(msg(serverName,SERVER_NAME));
+				out.println(msg(serverName, SERVER_NAME));
 				//tell client to identify what ClientType it is
-				clientType = ClientType.valueOf(negotiate(IDENTIFY,IDENTITY,out,in));
-				configure(clientType,out,in);
+				clientType = ClientType.valueOf(negotiate(IDENTIFY, IDENTITY, out, in));
+				configure(clientType, out, in);
 			}
 			catch (IOException e) {
 				e.printStackTrace();
@@ -110,11 +110,11 @@ public class Server {
 		}
 		
 		private void configure(ClientType clientType, PrintWriter out, BufferedReader in) {
-			if(clientType.equals(ClientType.WRITER))
-				configureWriter(out,in);
-			else if(clientType.equals((ClientType.RECEIVER)))
-				configureReader(out,in);
-			else throw new IllegalStateException("The provided ClientType '"+clientType+"' isn't supported.");
+			if (clientType.equals(ClientType.WRITER))
+				configureWriter(out, in);
+			else if (clientType.equals((ClientType.RECEIVER)))
+				configureReader(out, in);
+			else throw new IllegalStateException("The provided ClientType '" + clientType + "' isn't supported.");
 		}
 		
 		private void configureReader(PrintWriter out, BufferedReader in) {
