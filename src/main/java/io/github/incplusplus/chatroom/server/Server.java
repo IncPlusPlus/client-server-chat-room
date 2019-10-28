@@ -86,13 +86,13 @@ public class Server {
 		private Socket connectionSocket;
 		private PrintWriter out;
 		private BufferedReader in;
-		private ClientType clientType;
 		private ClientState clientState;
 		private String clientName;
 		private UUID clientUUID;
 		private int clientRegistrationKey;
 		
 		ClientHandler(Socket currentConnection) {
+			this.clientUUID = UUID.randomUUID();
 			this.clientState = CONNECTING;
 			this.connectionSocket = currentConnection;
 		}
@@ -107,7 +107,7 @@ public class Server {
 				//welcome the client (not the user)
 				out.println(msg(serverName, SERVER_NAME));
 				//tell client to identify what ClientType it is
-				clientType = ClientType.valueOf(negotiate(IDENTIFY, IDENTITY, out, in));
+				ClientType clientType = ClientType.valueOf(negotiate(IDENTIFY, IDENTITY, out, in));
 				configure(clientType, out, in);
 			}
 			catch (IOException e) {
@@ -144,7 +144,6 @@ public class Server {
 		
 		private void configureWriter(PrintWriter out, BufferedReader in) throws IOException {
 			this.clientName = negotiate(PROVIDE_CLIENT_NAME, CLIENT_NAME, out, in);
-			this.clientUUID = UUID.randomUUID();
 			synchronized (clientHandles) {
 				this.clientRegistrationKey = getNewRegKey(clientHandles);
 			}
