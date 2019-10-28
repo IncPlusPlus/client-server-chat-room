@@ -43,6 +43,14 @@ public class Constants {
 		 */
 		SERVER_NAME,
 		/**
+		 * Sent from the server. Asks client for their name
+		 */
+		PROVIDE_CLIENT_NAME,
+		/**
+		 * Sent from the client. Specifies client name.
+		 */
+		CLIENT_NAME,
+		/**
 		 * Sent from the server indicating the
 		 * client should identify itself as one
 		 * of the known {@link ClientType}s

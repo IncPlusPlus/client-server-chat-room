@@ -3,6 +3,7 @@ package io.github.incplusplus.chatroom.shared;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.Scanner;
+import java.util.SplittableRandom;
 
 import static io.github.incplusplus.chatroom.shared.Constants.ConstantEnum.MESSAGE;
 import static io.github.incplusplus.chatroom.shared.Constants.HEADER_SEPARATOR;
@@ -72,5 +73,9 @@ public class MiscUtils {
 	 */
 	public static Constants.ConstantEnum getHeader(String fullPayload) {
 		return Constants.ConstantEnum.valueOf(fullPayload.split(Character.toString(HEADER_SEPARATOR))[0]);
+	}
+	
+	public static int randInt(int lowerBoundInclusive, int upperBoundInclusive) {
+		return new SplittableRandom().nextInt( lowerBoundInclusive, upperBoundInclusive +1);
 	}
 }

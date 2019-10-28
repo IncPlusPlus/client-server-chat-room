@@ -11,12 +11,13 @@ import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Scanner;
+import java.util.UUID;
 
-import static io.github.incplusplus.chatroom.client.ClientState.CONNECTED;
-import static io.github.incplusplus.chatroom.client.ClientState.INVALID;
+import static io.github.incplusplus.chatroom.client.ClientState.*;
 import static io.github.incplusplus.chatroom.server.ServerMethods.negotiate;
 import static io.github.incplusplus.chatroom.shared.Constants.ConstantEnum.*;
 import static io.github.incplusplus.chatroom.shared.MiscUtils.msg;
+import static io.github.incplusplus.chatroom.shared.MiscUtils.randInt;
 import static io.github.incplusplus.chatroom.shared.StupidSimpleLogger.log;
 
 public class Server {
@@ -84,6 +85,9 @@ public class Server {
 		private BufferedReader in;
 		private ClientType clientType;
 		private ClientState clientState;
+		private String clientName;
+		private UUID clientUUID;
+		private int clientRegistrationKey;
 		
 		ClientHandler(Socket currentConnection) {
 			this.connectionSocket = currentConnection;
@@ -109,7 +113,7 @@ public class Server {
 			}
 		}
 		
-		private void configure(ClientType clientType, PrintWriter out, BufferedReader in) {
+		private void configure(ClientType clientType, PrintWriter out, BufferedReader in) throws IOException {
 			if (clientType.equals(ClientType.WRITER))
 				configureWriter(out, in);
 			else if (clientType.equals((ClientType.RECEIVER)))
@@ -121,8 +125,11 @@ public class Server {
 		
 		}
 		
-		private void configureWriter(PrintWriter out, BufferedReader in) {
-		
+		private void configureWriter(PrintWriter out, BufferedReader in) throws IOException {
+			this.clientName = negotiate(PROVIDE_CLIENT_NAME, CLIENT_NAME, out, in);
+			this.clientUUID = UUID.randomUUID();
+			this.clientRegistrationKey = randInt(1,10);
+			this.clientState = REGISTERED;
 		}
 	}
 }

@@ -30,5 +30,12 @@ public class VariousConnectionMethods {
 		}
 		//identify ourselves
 		outToServer.println(msg(String.valueOf(WRITER), IDENTITY));
+		fromServer = in.readLine();
+		//expecting server ask our name
+		if (fromServer == null || !getHeader(fromServer).equals(PROVIDE_CLIENT_NAME)) {
+			throw new IllegalStateException("The server failed to ask for client identity upon contact!");
+		}
+		//introduce ourselves
+		outToServer.println(msg("Ryan", CLIENT_NAME));
 	}
 }
