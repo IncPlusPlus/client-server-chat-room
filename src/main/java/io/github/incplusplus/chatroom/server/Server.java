@@ -10,8 +10,7 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.Scanner;
-import java.util.UUID;
+import java.util.*;
 
 import static io.github.incplusplus.chatroom.client.ClientState.*;
 import static io.github.incplusplus.chatroom.server.ServerMethods.negotiate;
@@ -24,6 +23,8 @@ public class Server {
 	private static ServerSocket socket;
 	private final static int port = 1234;
 	private static String serverName = "Chatroom Server";
+	private static List<ClientHandler> clientHandles = new ArrayList<>();
+	private static List<Message> messages = new ArrayList<>();
 	
 	public static void main(String[] args) throws IOException {
 		Scanner in = new Scanner(System.in);
@@ -58,7 +59,9 @@ public class Server {
 					System.out.println("Ready and waiting!");
 					while (true) {
 						try {
-							new ClientHandler(socket.accept()).start();
+							ClientHandler ch = new ClientHandler(socket.accept());
+							Collections.synchronizedList(clientHandles).add(ch);
+							ch.start();
 						}
 						catch (IOException e) {
 							e.printStackTrace();
@@ -79,7 +82,7 @@ public class Server {
 		t.start();
 	}
 	
-	private static class ClientHandler extends Thread {
+	static class ClientHandler extends Thread {
 		private Socket connectionSocket;
 		private PrintWriter out;
 		private BufferedReader in;
@@ -90,6 +93,7 @@ public class Server {
 		private int clientRegistrationKey;
 		
 		ClientHandler(Socket currentConnection) {
+			this.clientState = CONNECTING;
 			this.connectionSocket = currentConnection;
 		}
 		
@@ -121,14 +125,15 @@ public class Server {
 			else throw new IllegalStateException("The provided ClientType '" + clientType + "' isn't supported.");
 		}
 		
-		private void configureReader(PrintWriter out, BufferedReader in) {
-		
+		private void configureReader(PrintWriter out, BufferedReader in) throws IOException {
+			int regkey = Integer.parseInt(negotiate(PROVIDE_REG_KEY,REG_KEY,out,in));
+			this.clientState = CONNECTED;
 		}
 		
 		private void configureWriter(PrintWriter out, BufferedReader in) throws IOException {
 			this.clientName = negotiate(PROVIDE_CLIENT_NAME, CLIENT_NAME, out, in);
 			this.clientUUID = UUID.randomUUID();
-			this.clientRegistrationKey = randInt(1,10);
+			this.clientRegistrationKey = randInt(1,50);
 			this.clientState = REGISTERED;
 			out.println("Run ClientWindow.main() and enter " + clientRegistrationKey + " when prompted.");
 		}

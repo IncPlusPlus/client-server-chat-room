@@ -5,6 +5,11 @@ package io.github.incplusplus.chatroom.client;
  */
 public enum ClientState {
 	/**
+	 * Nothing has happened yet except an attempt
+	 * at a connection.
+	 */
+	CONNECTING,
+	/**
 	 * The client has taken no action yet besides
 	 * initiating a connection.
 	 */

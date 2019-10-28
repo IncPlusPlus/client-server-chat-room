@@ -62,6 +62,16 @@ public class Constants {
 		 */
 		IDENTITY,
 		/**
+		 * Sent from the server indicating the client
+		 * should provide a registration key.
+		 */
+		PROVIDE_REG_KEY,
+		/**
+		 * Sent from client to attach
+		 * receiving console window.
+		 */
+		REG_KEY,
+		/**
 		 * Indicates that this is to be treated as a
 		 * regular chat message from a client.
 		 */
