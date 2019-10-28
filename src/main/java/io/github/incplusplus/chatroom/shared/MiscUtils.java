@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.net.Socket;
 import java.util.Scanner;
 
-import static io.github.incplusplus.chatroom.shared.Constants.ConstantEnums.MESSAGE;
+import static io.github.incplusplus.chatroom.shared.Constants.ConstantEnum.MESSAGE;
 import static io.github.incplusplus.chatroom.shared.Constants.HEADER_SEPARATOR;
 
 public class MiscUtils {
@@ -26,7 +26,7 @@ public class MiscUtils {
 	
 	/**
 	 * Prefixes the provided string such that it begins with
-	 * the message value from the {@link Constants.ConstantEnums} enum
+	 * the message value from the {@link Constants.ConstantEnum} enum
 	 * and is also separated from the header by {@link Constants#HEADER_SEPARATOR}
 	 *
 	 * @param intendedMessage the message to be prefixed
@@ -45,7 +45,7 @@ public class MiscUtils {
 	 * @param header the particular header to prefix the string with
 	 * @return a prefixed copy of the provided string
 	 */
-	public static String msg(String intendedMessage, Constants.ConstantEnums header) {
+	public static String msg(String intendedMessage, Constants.ConstantEnum header) {
 		return String.valueOf(header) +
 				HEADER_SEPARATOR +
 				intendedMessage;
@@ -68,7 +68,7 @@ public class MiscUtils {
 	 * @param fullPayload the message to get the header from
 	 * @return the header of the supplied message
 	 */
-	public static Constants.ConstantEnums getHeader(String fullPayload) {
-		return Constants.ConstantEnums.valueOf(fullPayload.split(Character.toString(HEADER_SEPARATOR))[0]);
+	public static Constants.ConstantEnum getHeader(String fullPayload) {
+		return Constants.ConstantEnum.valueOf(fullPayload.split(Character.toString(HEADER_SEPARATOR))[0]);
 	}
 }

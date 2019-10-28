@@ -1,20 +1,18 @@
 package io.github.incplusplus.chatroom.client;
 
-import io.github.incplusplus.chatroom.shared.Constants;
-
 import java.io.BufferedReader;
-import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.net.Socket;
 
-import static io.github.incplusplus.chatroom.shared.Constants.ConstantEnums.IDENTIFY;
-import static io.github.incplusplus.chatroom.shared.Constants.ConstantEnums.SERVER_NAME;
-import static io.github.incplusplus.chatroom.shared.MiscUtils.decode;
+import static io.github.incplusplus.chatroom.client.ClientType.WRITER;
+import static io.github.incplusplus.chatroom.shared.Constants.ConstantEnum.*;
 import static io.github.incplusplus.chatroom.shared.MiscUtils.getHeader;
+import static io.github.incplusplus.chatroom.shared.MiscUtils.msg;
 import static io.github.incplusplus.chatroom.shared.StupidSimpleLogger.log;
 
 public class VariousConnectionMethods {
-	public static void makeFirstContact(Socket sock, DataOutputStream outToServer, BufferedReader in,
+	public static void makeFirstContact(Socket sock, PrintWriter outToServer, BufferedReader in,
 	                                    ClientType clientType) throws IOException {
 		String fromServer = in.readLine();
 		log("From server: " + fromServer);
@@ -30,5 +28,7 @@ public class VariousConnectionMethods {
 		if(fromServer == null || !getHeader(fromServer).equals(IDENTIFY)) {
 			throw new IllegalStateException("The server failed to ask for client identity upon contact!");
 		}
+		//identify ourselves
+		outToServer.println(msg(String.valueOf(WRITER),IDENTITY));
 	}
 }

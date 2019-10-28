@@ -18,7 +18,7 @@ public class Constants {
 	 * This enum contains values that are processed by the server
 	 * and/or client
 	 */
-	public enum ConstantEnums {
+	public enum ConstantEnum {
 		/**
 		 * Indicates to the server that the new connection it has
 		 * just received is for a headless-style client where
@@ -48,6 +48,11 @@ public class Constants {
 		 * of the known {@link ClientType}s
 		 */
 		IDENTIFY,
+		/**
+		 * Sent from the client as a response to
+		 * the {@link #IDENTIFY} query.
+		 */
+		IDENTITY,
 		/**
 		 * Indicates that this is to be treated as a
 		 * regular chat message from a client.

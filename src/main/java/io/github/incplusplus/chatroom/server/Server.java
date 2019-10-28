@@ -13,8 +13,9 @@ import java.net.Socket;
 import java.util.Scanner;
 
 import static io.github.incplusplus.chatroom.client.ClientState.CONNECTED;
-import static io.github.incplusplus.chatroom.shared.Constants.ConstantEnums.IDENTIFY;
-import static io.github.incplusplus.chatroom.shared.Constants.ConstantEnums.SERVER_NAME;
+import static io.github.incplusplus.chatroom.client.ClientState.INVALID;
+import static io.github.incplusplus.chatroom.server.ServerMethods.negotiate;
+import static io.github.incplusplus.chatroom.shared.Constants.ConstantEnum.*;
 import static io.github.incplusplus.chatroom.shared.MiscUtils.msg;
 import static io.github.incplusplus.chatroom.shared.StupidSimpleLogger.log;
 
@@ -98,13 +99,30 @@ public class Server {
 				//welcome the client (not the user)
 				out.println(msg(serverName,SERVER_NAME));
 				//tell client to identify what ClientType it is
-				out.println(IDENTIFY);
-				clientType = ClientType.valueOf(in.readLine());
+				clientType = ClientType.valueOf(negotiate(IDENTIFY,IDENTITY,out,in));
+				configure(clientType,out,in);
 			}
 			catch (IOException e) {
 				e.printStackTrace();
 				System.out.println("FATAL ERROR. AN ERROR ESCAPED OUT INTO THE CLIENT HANDLER'S THREAD.RUN() METHOD");
+				clientState = INVALID;
 			}
+		}
+		
+		private void configure(ClientType clientType, PrintWriter out, BufferedReader in) {
+			if(clientType.equals(ClientType.WRITER))
+				configureWriter(out,in);
+			else if(clientType.equals((ClientType.RECEIVER)))
+				configureReader(out,in);
+			else throw new IllegalStateException("The provided ClientType '"+clientType+"' isn't supported.");
+		}
+		
+		private void configureReader(PrintWriter out, BufferedReader in) {
+		
+		}
+		
+		private void configureWriter(PrintWriter out, BufferedReader in) {
+		
 		}
 	}
 }

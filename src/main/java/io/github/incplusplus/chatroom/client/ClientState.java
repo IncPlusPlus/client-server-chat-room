@@ -20,6 +20,11 @@ public enum ClientState {
 	 */
 	LISTENING,
 	/**
+	 * Something happened to this connection.
+	 * It's no longer valid.
+	 */
+	INVALID,
+	/**
 	 * They're gone!
 	 */
 	DISCONNECTED;
