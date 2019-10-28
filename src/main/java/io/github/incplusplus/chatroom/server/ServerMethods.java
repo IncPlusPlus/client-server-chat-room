@@ -5,10 +5,10 @@ import io.github.incplusplus.chatroom.shared.Constants;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.List;
 
 import static io.github.incplusplus.chatroom.shared.Constants.ConstantEnum.IDENTIFY;
-import static io.github.incplusplus.chatroom.shared.MiscUtils.decode;
-import static io.github.incplusplus.chatroom.shared.MiscUtils.getHeader;
+import static io.github.incplusplus.chatroom.shared.MiscUtils.*;
 import static io.github.incplusplus.chatroom.shared.StupidSimpleLogger.log;
 
 /**
@@ -70,5 +70,41 @@ public class ServerMethods {
 	                                          Constants.ConstantEnum properResponse,
 	                                          String actual) {
 		log("Expected '" + properResponse + "' for demand '" + serverDemand + "' but got '" + actual + "' instead.");
+	}
+	
+	/**
+	 * Provides a new registration key that does not
+	 * yet exist within the current group of clients.
+	 *
+	 * @param handlers the current handlers
+	 * @return a unique int
+	 * @throws IllegalStateException if there are too many handlers
+	 *                               pending registration.
+	 * @implNote Because this method recurses, it would be unwise to
+	 * synchronize on the handlers parameter. Therefore YOU MUST
+	 * RUN THIS METHOD IN A BLOCK SYNCHRONIZED ON handlers.
+	 */
+	static int getNewRegKey(List<Server.ClientHandler> handlers) {
+		int possiblyUsableKey = randInt(1, 100);
+		if (getHandlerForKey(handlers, possiblyUsableKey) == null) {
+			return possiblyUsableKey;
+		}
+		else {
+			return getNewRegKey(handlers);
+		}
+	}
+	
+	/**
+	 * Find a {@link io.github.incplusplus.chatroom.server.Server.ClientHandler} that
+	 * contains the provided registration key.
+	 *
+	 * @param handlers the list of handlers
+	 * @param key      a registration key
+	 * @return a ClientHandler that contains the provided registration key; else null
+	 * @implNote YOU MUST RUN THIS METHOD IN A BLOCK SYNCHRONIZED ON handlers.
+	 */
+	static Server.ClientHandler getHandlerForKey(List<Server.ClientHandler> handlers, int key) {
+		return handlers.stream().filter(clientHandler ->
+				clientHandler.clientRegistrationKey == key).findAny().orElse(null);
 	}
 }

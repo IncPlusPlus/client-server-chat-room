@@ -72,6 +72,16 @@ public class Constants {
 		 */
 		REG_KEY,
 		/**
+		 * This registration key does not
+		 * exist on the server.
+		 */
+		REG_KEY_REJECTED,
+		/**
+		 * Whatever was just sent is fine.
+		 * Continue with registration flow.
+		 */
+		CONTINUE,
+		/**
 		 * Indicates that this is to be treated as a
 		 * regular chat message from a client.
 		 */

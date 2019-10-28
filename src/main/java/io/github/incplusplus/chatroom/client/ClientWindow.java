@@ -10,6 +10,7 @@ import java.net.Socket;
 import java.util.Scanner;
 
 import static io.github.incplusplus.chatroom.client.VariousConnectionMethods.makeFirstContact;
+import static io.github.incplusplus.chatroom.client.VariousConnectionMethods.registerReceiver;
 import static io.github.incplusplus.chatroom.shared.Constants.ConstantEnum.REG_KEY;
 import static io.github.incplusplus.chatroom.shared.MiscUtils.msg;
 import static io.github.incplusplus.chatroom.shared.MiscUtils.promptForSocket;
@@ -31,8 +32,7 @@ public class ClientWindow {
 		System.out.print("Name: ");
 		System.out.println("Connecting...");
 		makeFirstContact(sock, outToServer, in, ClientType.RECEIVER);
-		System.out.print("Registration key: ");
-		outToServer.println(msg(kb.nextLine(), REG_KEY));
+		registerReceiver(kb, outToServer, in);
 		System.out.println("Connected! Messages from you and others will appear below.");
 		while (true) {
 			log(in.readLine());

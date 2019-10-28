@@ -13,7 +13,7 @@ import java.net.Socket;
 import java.util.*;
 
 import static io.github.incplusplus.chatroom.client.ClientState.*;
-import static io.github.incplusplus.chatroom.server.ServerMethods.negotiate;
+import static io.github.incplusplus.chatroom.server.ServerMethods.*;
 import static io.github.incplusplus.chatroom.shared.Constants.ConstantEnum.*;
 import static io.github.incplusplus.chatroom.shared.MiscUtils.msg;
 import static io.github.incplusplus.chatroom.shared.MiscUtils.randInt;
@@ -23,7 +23,7 @@ public class Server {
 	private static ServerSocket socket;
 	private final static int port = 1234;
 	private static String serverName = "Chatroom Server";
-	private static List<ClientHandler> clientHandles = new ArrayList<>();
+	private static final List<ClientHandler> clientHandles = new ArrayList<>();
 	private static List<Message> messages = new ArrayList<>();
 	
 	public static void main(String[] args) throws IOException {
@@ -117,6 +117,7 @@ public class Server {
 			}
 		}
 		
+		//<editor-fold desc="Configuration methods">
 		private void configure(ClientType clientType, PrintWriter out, BufferedReader in) throws IOException {
 			if (clientType.equals(ClientType.WRITER))
 				configureWriter(out, in);
@@ -126,16 +127,34 @@ public class Server {
 		}
 		
 		private void configureReader(PrintWriter out, BufferedReader in) throws IOException {
-			int regkey = Integer.parseInt(negotiate(PROVIDE_REG_KEY,REG_KEY,out,in));
+			int providedKey = Integer.parseInt(negotiate(PROVIDE_REG_KEY, REG_KEY, out, in));
+			ClientHandler handlerForKey = null;
+			synchronized (clientHandles) {
+				//Find the client whose registration key matches that of what this
+				//new client has provided.
+				handlerForKey = getHandlerForKey(clientHandles, providedKey);
+			}
+			if (handlerForKey == null) {
+				out.println(REG_KEY_REJECTED);
+				configureReader(out, in);
+			}
+			out.println(CONTINUE);
 			this.clientState = CONNECTED;
 		}
 		
 		private void configureWriter(PrintWriter out, BufferedReader in) throws IOException {
 			this.clientName = negotiate(PROVIDE_CLIENT_NAME, CLIENT_NAME, out, in);
 			this.clientUUID = UUID.randomUUID();
-			this.clientRegistrationKey = randInt(1,50);
+			synchronized (clientHandles) {
+				this.clientRegistrationKey = getNewRegKey(clientHandles);
+			}
 			this.clientState = REGISTERED;
+			//reset key so more become available
+			this.clientRegistrationKey = 0;
 			out.println("Run ClientWindow.main() and enter " + clientRegistrationKey + " when prompted.");
 		}
+		//</editor-fold>
+		
+		
 	}
 }

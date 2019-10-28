@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.Scanner;
 
 import static io.github.incplusplus.chatroom.client.ClientType.RECEIVER;
 import static io.github.incplusplus.chatroom.client.ClientType.WRITER;
@@ -49,17 +50,31 @@ public class VariousConnectionMethods {
 			outToServer.println(msg(name, CLIENT_NAME));
 		}
 		else if(clientType.equals(RECEIVER)) {
-			outToServer.println(msg(String.valueOf(RECEIVER), IDENTITY));
-			fromServer = in.readLine();
-			//expecting server ask for registration key
-			if (fromServer == null || !getHeader(fromServer).equals(PROVIDE_REG_KEY)) {
-				throw new IllegalStateException("The server failed to ask for client registration key upon contact!");
-			}
+			//now the registerReceiver method should be run
+			
 			//prompt user for registration key
 			//at this point, the interaction should
 			//be written such that the client identifies itself.
 			//This has not been implemented here to avoid having more parameters.
-			log(fromServer);
+		}
+	}
+	
+	public static void registerReceiver(Scanner kb, PrintWriter outToServer, BufferedReader in) throws IOException {
+		outToServer.println(msg(String.valueOf(RECEIVER), IDENTITY));
+		String fromServer = in.readLine();
+		//expecting server ask for registration key
+		if (fromServer == null || !getHeader(fromServer).equals(PROVIDE_REG_KEY)) {
+			throw new IllegalStateException("The server failed to ask for client registration key upon contact!");
+		}
+		System.out.print("Registration key: ");
+		outToServer.println(msg(kb.nextLine(), REG_KEY));
+		fromServer = in.readLine();
+		if(fromServer == null || !getHeader(fromServer).equals(CONTINUE)) {
+			throw new IllegalStateException("The server failed to acknowledge client registration key message!");
+		}
+		if(getHeader(fromServer).equals(REG_KEY_REJECTED)) {
+			System.out.println("That key was not recognized by the server. Try again.");
+			registerReceiver(kb, outToServer, in);
 		}
 	}
 }

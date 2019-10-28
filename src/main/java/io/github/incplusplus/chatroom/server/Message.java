@@ -8,4 +8,5 @@ import java.time.Instant;
 public class Message {
 	private Instant timestamp;
 	private Server.ClientHandler sender;
+	private String body;
 }
