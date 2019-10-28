@@ -31,9 +31,9 @@ public class ClientWindow {
 		System.out.print("Name: ");
 		System.out.println("Connecting...");
 		makeFirstContact(sock, outToServer, in, ClientType.RECEIVER);
-//		log(in.readLine());
 		System.out.print("Registration key: ");
 		outToServer.println(msg(kb.nextLine(), REG_KEY));
+		System.out.println("Connected! Messages from you and others will appear below.");
 		while (true) {
 			log(in.readLine());
 		}

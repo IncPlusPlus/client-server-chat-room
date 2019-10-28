@@ -43,7 +43,7 @@ public class VariousConnectionMethods {
 			fromServer = in.readLine();
 			//expecting server ask our name
 			if (fromServer == null || !getHeader(fromServer).equals(PROVIDE_CLIENT_NAME)) {
-				throw new IllegalStateException("The server failed to ask for client identity upon contact!");
+				throw new IllegalStateException("The server failed to ask for client name upon contact!");
 			}
 			//introduce ourselves
 			outToServer.println(msg(name, CLIENT_NAME));
@@ -53,7 +53,7 @@ public class VariousConnectionMethods {
 			fromServer = in.readLine();
 			//expecting server ask for registration key
 			if (fromServer == null || !getHeader(fromServer).equals(PROVIDE_REG_KEY)) {
-				throw new IllegalStateException("The server failed to ask for client identity upon contact!");
+				throw new IllegalStateException("The server failed to ask for client registration key upon contact!");
 			}
 			//prompt user for registration key
 			//at this point, the interaction should
