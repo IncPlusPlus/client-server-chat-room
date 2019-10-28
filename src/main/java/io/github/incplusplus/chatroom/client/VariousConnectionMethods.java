@@ -17,7 +17,7 @@ public class VariousConnectionMethods {
 		String fromServer = in.readLine();
 		log("From server: " + fromServer);
 		//expecting server to identify itself by name
-		if(fromServer == null || !getHeader(fromServer).equals(SERVER_NAME)) {
+		if (fromServer == null || !getHeader(fromServer).equals(SERVER_NAME)) {
 			throw new IllegalStateException("The server failed to identify itself upon contact!");
 		}
 		
@@ -25,10 +25,10 @@ public class VariousConnectionMethods {
 		fromServer = in.readLine();
 		log("From server: " + fromServer);
 		//expecting server to identify itself by name
-		if(fromServer == null || !getHeader(fromServer).equals(IDENTIFY)) {
+		if (fromServer == null || !getHeader(fromServer).equals(IDENTIFY)) {
 			throw new IllegalStateException("The server failed to ask for client identity upon contact!");
 		}
 		//identify ourselves
-		outToServer.println(msg(String.valueOf(WRITER),IDENTITY));
+		outToServer.println(msg(String.valueOf(WRITER), IDENTITY));
 	}
 }

@@ -42,7 +42,7 @@ public class MiscUtils {
 	 * and is also separated from the header by {@link Constants#HEADER_SEPARATOR}
 	 *
 	 * @param intendedMessage the message to be prefixed
-	 * @param header the particular header to prefix the string with
+	 * @param header          the particular header to prefix the string with
 	 * @return a prefixed copy of the provided string
 	 */
 	public static String msg(String intendedMessage, Constants.ConstantEnum header) {
@@ -54,10 +54,11 @@ public class MiscUtils {
 	/**
 	 * Decodes a message. This strips the header from the message
 	 * and returns only the payload.
-	 * @throws an {@link IOException} if there is no header
-	 * or no message at all
+	 *
 	 * @param receivedMessage the message to decode
 	 * @return the decoded message
+	 * @throws an {@link IOException} if there is no header
+	 *            or no message at all
 	 */
 	public static String decode(String receivedMessage) {
 		return receivedMessage.split(Character.toString(HEADER_SEPARATOR))[1];
@@ -65,6 +66,7 @@ public class MiscUtils {
 	
 	/**
 	 * Gets the header of a message which contains a header and a payload.
+	 *
 	 * @param fullPayload the message to get the header from
 	 * @return the header of the supplied message
 	 */

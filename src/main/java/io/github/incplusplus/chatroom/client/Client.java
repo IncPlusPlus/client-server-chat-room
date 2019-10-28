@@ -18,7 +18,7 @@ public class Client {
 		sock = promptForSocket();
 		in = new BufferedReader(new InputStreamReader(sock.getInputStream()));
 		outToServer = new PrintWriter(sock.getOutputStream(), true);
-		makeFirstContact(sock,outToServer,in,ClientType.WRITER);
-//		outToServer.writeBytes(msg("Hello!"));
+		makeFirstContact(sock, outToServer, in, ClientType.WRITER);
+		//		outToServer.writeBytes(msg("Hello!"));
 	}
 }
