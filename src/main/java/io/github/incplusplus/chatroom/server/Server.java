@@ -130,6 +130,7 @@ public class Server {
 			this.clientUUID = UUID.randomUUID();
 			this.clientRegistrationKey = randInt(1,10);
 			this.clientState = REGISTERED;
+			out.println("Run ClientWindow.main() and enter " + clientRegistrationKey + " when prompted.");
 		}
 	}
 }

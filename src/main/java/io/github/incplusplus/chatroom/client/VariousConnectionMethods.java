@@ -13,7 +13,7 @@ import static io.github.incplusplus.chatroom.shared.StupidSimpleLogger.log;
 
 public class VariousConnectionMethods {
 	public static void makeFirstContact(Socket sock, PrintWriter outToServer, BufferedReader in,
-	                                    ClientType clientType) throws IOException {
+	                                    ClientType clientType, String name) throws IOException {
 		String fromServer = in.readLine();
 		log("From server: " + fromServer);
 		//expecting server to identify itself by name
@@ -36,6 +36,6 @@ public class VariousConnectionMethods {
 			throw new IllegalStateException("The server failed to ask for client identity upon contact!");
 		}
 		//introduce ourselves
-		outToServer.println(msg("Ryan", CLIENT_NAME));
+		outToServer.println(msg(name, CLIENT_NAME));
 	}
 }
