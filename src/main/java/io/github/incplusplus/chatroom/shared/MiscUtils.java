@@ -57,12 +57,14 @@ public class MiscUtils {
 	 * and returns only the payload.
 	 *
 	 * @param receivedMessage the message to decode
-	 * @return the decoded message
-	 * @throws an {@link IOException} if there is no header
-	 *            or no message at all
+	 * @return the decoded message if it exists; else null
+	 * @throws IOException if there is no header
 	 */
 	public static String decode(String receivedMessage) {
-		return receivedMessage.split(Character.toString(HEADER_SEPARATOR))[1];
+		String[] split = receivedMessage.split(Character.toString(HEADER_SEPARATOR));
+		if (split.length > 1)
+			return split[1];
+		return null;
 	}
 	
 	/**
@@ -76,6 +78,6 @@ public class MiscUtils {
 	}
 	
 	public static int randInt(int lowerBoundInclusive, int upperBoundInclusive) {
-		return new SplittableRandom().nextInt( lowerBoundInclusive, upperBoundInclusive +1);
+		return new SplittableRandom().nextInt(lowerBoundInclusive, upperBoundInclusive + 1);
 	}
 }

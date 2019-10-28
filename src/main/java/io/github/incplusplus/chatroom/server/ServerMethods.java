@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.List;
 
+import static io.github.incplusplus.chatroom.client.ClientState.REGISTERED;
 import static io.github.incplusplus.chatroom.shared.Constants.ConstantEnum.IDENTIFY;
 import static io.github.incplusplus.chatroom.shared.MiscUtils.*;
 import static io.github.incplusplus.chatroom.shared.StupidSimpleLogger.log;
@@ -26,7 +27,7 @@ public class ServerMethods {
 	 * @param serverDemand   the header to send to the client which
 	 *                       would indicate the expected response
 	 * @param properResponse the correct response header
-	 * @param outToClient    a {@link PrintWrite} to the client
+	 * @param outToClient    a {@link PrintWriter} to the client
 	 * @param inFromClient   a {@link BufferedReader} from the client
 	 * @return the string content of the reply from the client
 	 */
@@ -104,7 +105,11 @@ public class ServerMethods {
 	 * @implNote YOU MUST RUN THIS METHOD IN A BLOCK SYNCHRONIZED ON handlers.
 	 */
 	static Server.ClientHandler getHandlerForKey(List<Server.ClientHandler> handlers, int key) {
-		return handlers.stream().filter(clientHandler ->
-				clientHandler.clientRegistrationKey == key).findAny().orElse(null);
+		return handlers.stream()
+				//this should grab clients that still have a registration key
+				.filter(clientHandler -> clientHandler.getClientState().equals(REGISTERED))
+				//this grabs a client that has the same key as what was provided in this function
+				.filter(clientHandler ->
+				clientHandler.getClientRegistrationKey() == key).findAny().orElse(null);
 	}
 }

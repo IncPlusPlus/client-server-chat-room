@@ -16,7 +16,6 @@ import static io.github.incplusplus.chatroom.client.ClientState.*;
 import static io.github.incplusplus.chatroom.server.ServerMethods.*;
 import static io.github.incplusplus.chatroom.shared.Constants.ConstantEnum.*;
 import static io.github.incplusplus.chatroom.shared.MiscUtils.msg;
-import static io.github.incplusplus.chatroom.shared.MiscUtils.randInt;
 import static io.github.incplusplus.chatroom.shared.StupidSimpleLogger.log;
 
 public class Server {
@@ -83,9 +82,12 @@ public class Server {
 	}
 	
 	static class ClientHandler extends Thread {
-		private Socket connectionSocket;
-		private PrintWriter out;
-		private BufferedReader in;
+		private Socket writerSocket;
+		private Socket receiverSocket;
+		private PrintWriter writerOut;
+		private PrintWriter receiverOut;
+		private BufferedReader writerIn;
+		private BufferedReader receiverIn;
 		private ClientState clientState;
 		private String clientName;
 		private UUID clientUUID;
@@ -94,21 +96,21 @@ public class Server {
 		ClientHandler(Socket currentConnection) {
 			this.clientUUID = UUID.randomUUID();
 			this.clientState = CONNECTING;
-			this.connectionSocket = currentConnection;
+			this.writerSocket = currentConnection;
 		}
 		
 		public void run() {
 			try {
 				clientState = CONNECTED;
-				out = new PrintWriter(connectionSocket.getOutputStream(), true);
-				in = new BufferedReader(new InputStreamReader(connectionSocket.getInputStream()));
-				log("New client connected at " + connectionSocket.getLocalAddress()
-						+ ":" + connectionSocket.getLocalPort() + " Performing registration");
+				writerOut = new PrintWriter(writerSocket.getOutputStream(), true);
+				writerIn = new BufferedReader(new InputStreamReader(writerSocket.getInputStream()));
+				log("New client connected at " + writerSocket.getLocalAddress()
+						+ ":" + writerSocket.getLocalPort() + " Performing registration");
 				//welcome the client (not the user)
-				out.println(msg(serverName, SERVER_NAME));
+				writerOut.println(msg(serverName, SERVER_NAME));
 				//tell client to identify what ClientType it is
-				ClientType clientType = ClientType.valueOf(negotiate(IDENTIFY, IDENTITY, out, in));
-				configure(clientType, out, in);
+				ClientType clientType = ClientType.valueOf(negotiate(IDENTIFY, IDENTITY, writerOut, writerIn));
+				configure(clientType, writerOut, writerIn);
 			}
 			catch (IOException e) {
 				e.printStackTrace();
@@ -139,7 +141,15 @@ public class Server {
 				configureReader(out, in);
 			}
 			out.println(CONTINUE);
-			this.clientState = CONNECTED;
+			handlerForKey.clientState = CONNECTED;
+			//reset key so more become available
+			handlerForKey.clientRegistrationKey = 0;
+			
+			//attach this reader to the existing writer
+			//calling the getWriter*() methods because this is initially assumed to be a writer
+			handlerForKey.attachReceiver(getWriterSocket(),getWriterOut(),getWriterIn());
+			//remove this from the clients list as this is not a unique client but a receiver
+			Collections.synchronizedList(clientHandles).remove(this);
 		}
 		
 		private void configureWriter(PrintWriter out, BufferedReader in) throws IOException {
@@ -148,12 +158,56 @@ public class Server {
 				this.clientRegistrationKey = getNewRegKey(clientHandles);
 			}
 			this.clientState = REGISTERED;
-			//reset key so more become available
-			this.clientRegistrationKey = 0;
 			out.println("Run ClientWindow.main() and enter " + clientRegistrationKey + " when prompted.");
 		}
 		//</editor-fold>
 		
+		public void attachReceiver(Socket receiverSocket, PrintWriter receiverOut, BufferedReader receiverIn) {
+			this.receiverSocket = receiverSocket;
+			this.receiverOut = receiverOut;
+			this.receiverIn = receiverIn;
+		}
 		
+		//<editor-fold desc="Getters">
+		public Socket getWriterSocket() {
+			return writerSocket;
+		}
+		
+		public Socket getReceiverSocket() {
+			return receiverSocket;
+		}
+		
+		public PrintWriter getWriterOut() {
+			return writerOut;
+		}
+		
+		public PrintWriter getReceiverOut() {
+			return receiverOut;
+		}
+		
+		public BufferedReader getWriterIn() {
+			return writerIn;
+		}
+		
+		public BufferedReader getReceiverIn() {
+			return receiverIn;
+		}
+		
+		public ClientState getClientState() {
+			return clientState;
+		}
+		
+		public String getClientName() {
+			return clientName;
+		}
+		
+		public UUID getClientUUID() {
+			return clientUUID;
+		}
+		
+		public int getClientRegistrationKey() {
+			return clientRegistrationKey;
+		}
+		//</editor-fold>
 	}
 }
