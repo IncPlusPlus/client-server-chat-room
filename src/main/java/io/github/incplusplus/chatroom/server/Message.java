@@ -100,6 +100,9 @@ public class Message implements Comparable<Message> {
 	public String toString() {
 		return "[" +
 				formatter.format(getTimestamp()) +
-				"] " + getSender() + ": " + getBody();
+				"] " +
+				//Only append a username if it exists
+				(!getSender().isEmpty() ? getSender() + ": " : "")
+				+ getBody();
 	}
 }

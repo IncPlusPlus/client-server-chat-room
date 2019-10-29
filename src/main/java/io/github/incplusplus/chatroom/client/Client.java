@@ -45,5 +45,6 @@ public class Client {
 				outToServer.println(msg(messageToSend));
 			}
 		}
+		System.out.println("Quit command received. See ya!");
 	}
 }
