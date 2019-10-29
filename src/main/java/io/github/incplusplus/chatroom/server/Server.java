@@ -112,18 +112,13 @@ public class Server {
 				writerOut = new PrintWriter(writerSocket.getOutputStream(), true);
 				writerIn = new BufferedReader(new InputStreamReader(writerSocket.getInputStream()));
 				log("New client connected at " + writerSocket.getLocalAddress()
-						+ ":" + writerSocket.getLocalPort() + " Performing registration");
+						+ ":" + writerSocket.getLocalPort());
 				//welcome the client (not the user)
 				writerOut.println(msg(serverName, SERVER_NAME));
 				//tell client to identify what ClientType it is
 				clientType = ClientType.valueOf(negotiate(IDENTIFY, IDENTITY, writerOut, writerIn));
-				ClientHandler fullyConfiguredClient;
 				//handle the incoming connections
-				if (clientType.equals(WRITER))
-					configureWriter(writerOut, writerIn).startWhenReady();
-				else if (clientType.equals((RECEIVER)))
-					configureReader(writerOut, writerIn);
-				else throw new IllegalStateException("The provided ClientType '" + clientType + "' isn't supported.");
+				configure(clientType, writerOut, writerIn);
 			}
 			catch (SocketException e) {
 				broadcast(
@@ -144,12 +139,16 @@ public class Server {
 				System.out.println("FATAL ERROR. AN ERROR ESCAPED OUT INTO THE CLIENT HANDLER'S THREAD.RUN() METHOD");
 				clientState = INVALID;
 			}
+			catch (InterruptedException e) {
+				e.printStackTrace();
+			}
 		}
 		
 		//<editor-fold desc="Configuration methods">
-		private void configure(ClientType clientType, PrintWriter out, BufferedReader in) throws IOException {
+		private void configure(ClientType clientType, PrintWriter out,
+		                       BufferedReader in) throws IOException, InterruptedException {
 			if (clientType.equals(WRITER))
-				configureWriter(out, in);
+				configureWriter(out, in).startWhenReady();
 			else if (clientType.equals((RECEIVER)))
 				configureReader(out, in);
 			else throw new IllegalStateException("The provided ClientType '" + clientType + "' isn't supported.");
@@ -183,6 +182,10 @@ public class Server {
 		
 		private ClientHandler configureWriter(PrintWriter out, BufferedReader in) throws IOException {
 			this.clientName = negotiate(PROVIDE_CLIENT_NAME, CLIENT_NAME, out, in);
+			broadcast(
+					new MessageBuilder().setTimestamp(Instant.now()).setBody(
+							"User '" + this.getClientName() + "' is connecting.").setSender("").createMessage()
+			);
 			synchronized (clientHandles) {
 				this.clientRegistrationKey = getNewRegKey(clientHandles);
 			}
@@ -209,6 +212,7 @@ public class Server {
 		
 		public void broadcast(Message message) {
 			Collections.synchronizedList(messages).add(message);
+			log(message.toString());
 			synchronized (clientHandles) {
 				clientHandles.stream()
 						.filter(ClientHandler::isListening)
@@ -227,11 +231,23 @@ public class Server {
 			getReceiverOut().println(msg(SHARED_MAPPER.writeValueAsString(message)));
 		}
 		
-		public void startWhenReady() throws IOException {
-			if(clientState.equals(INVALID))
+		public void startWhenReady() throws IOException, InterruptedException {
+			if (clientState.equals(INVALID))
 				return;
 			//block until we are listening
-			while (!clientState.equals(LISTENING)) {}
+			ClientState localClientState = getClientState();
+			while (!localClientState.equals(LISTENING)) {
+				//I would leave this loop empty but for some reason
+				//putting methods here is the only thing that makes this work
+				//outside of my IDE
+				Thread.sleep(1000);
+				localClientState = getClientState();
+			}
+			//broadcast that the user has fully connected
+			broadcast(
+					new MessageBuilder().setTimestamp(Instant.now()).setBody(
+							"User '" + this.getClientName() + "' has connected.").setSender("").createMessage()
+			);
 			//start the whole listening process
 			while (clientState.equals(LISTENING)) {
 				if (writerIn != null && receiverOut != null) {
@@ -240,8 +256,9 @@ public class Server {
 						message = writerIn.readLine();
 						switch (getHeader(message)) {
 							case MESSAGE:
-								broadcast(new MessageBuilder().setBody(decodeMessage(message))
-										.setSender(this.getClientName()).setTimestamp(Instant.now()).createMessage());
+								Message m = new MessageBuilder().setBody(decodeMessage(message))
+										.setSender(this.getClientName()).setTimestamp(Instant.now()).createMessage();
+								broadcast(m);
 								break;
 							case DISCONNECT:
 								disconnect();
