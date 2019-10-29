@@ -117,7 +117,6 @@ public class Server {
 				writerOut.println(msg(serverName, SERVER_NAME));
 				//tell client to identify what ClientType it is
 				clientType = ClientType.valueOf(negotiate(IDENTIFY, IDENTITY, writerOut, writerIn));
-//				configure(clientType, writerOut, writerIn);
 				ClientHandler fullyConfiguredClient;
 				//handle the incoming connections
 				if (clientType.equals(WRITER))
@@ -146,22 +145,6 @@ public class Server {
 				clientState = INVALID;
 			}
 		}
-		
-//		private void startParticipation(BufferedReader writerIn, PrintWriter receiverOut) throws IOException {
-//			String message;
-//			while (!getWriterSocket().isClosed() && !getReceiverSocket().isClosed()) {
-//				message = writerIn.readLine();
-//				switch (getHeader(message)) {
-//					case MESSAGE:
-//						broadcast(new MessageBuilder().setBody(decodeMessage(message))
-//								.setSender(this.getClientName()).setTimestamp(Instant.now()).createMessage());
-//						break;
-//					case DISCONNECT:
-//						disconnect();
-//						break;
-//				}
-//			}
-//		}
 		
 		//<editor-fold desc="Configuration methods">
 		private void configure(ClientType clientType, PrintWriter out, BufferedReader in) throws IOException {
@@ -223,16 +206,6 @@ public class Server {
 			this.writerSocket.close();
 			this.receiverSocket.close();
 		}
-		
-//		private void allowParticipation() throws IOException {
-//			if (writerIn != null && receiverOut != null) {
-//				startParticipation(writerIn, receiverOut);
-//			}
-//			else {
-//				this.clientState = INVALID;
-//				disconnect();
-//			}
-//		}
 		
 		public void broadcast(Message message) {
 			Collections.synchronizedList(messages).add(message);
