@@ -16,6 +16,8 @@ import java.time.Instant;
 import java.util.*;
 
 import static io.github.incplusplus.chatroom.client.ClientState.*;
+import static io.github.incplusplus.chatroom.client.ClientType.RECEIVER;
+import static io.github.incplusplus.chatroom.client.ClientType.WRITER;
 import static io.github.incplusplus.chatroom.server.ServerMethods.*;
 import static io.github.incplusplus.chatroom.shared.Constants.ConstantEnum.*;
 import static io.github.incplusplus.chatroom.shared.Constants.SHARED_MAPPER;
@@ -96,6 +98,7 @@ public class Server {
 		private String clientName;
 		private UUID clientUUID;
 		private int clientRegistrationKey;
+		private ClientType clientType;
 		
 		ClientHandler(Socket currentConnection) {
 			this.clientUUID = UUID.randomUUID();
@@ -113,15 +116,28 @@ public class Server {
 				//welcome the client (not the user)
 				writerOut.println(msg(serverName, SERVER_NAME));
 				//tell client to identify what ClientType it is
-				ClientType clientType = ClientType.valueOf(negotiate(IDENTIFY, IDENTITY, writerOut, writerIn));
-				configure(clientType, writerOut, writerIn);
+				clientType = ClientType.valueOf(negotiate(IDENTIFY, IDENTITY, writerOut, writerIn));
+//				configure(clientType, writerOut, writerIn);
+				ClientHandler fullyConfiguredClient;
+				//handle the incoming connections
+				if (clientType.equals(WRITER))
+					configureWriter(writerOut, writerIn).startWhenReady();
+				else if (clientType.equals((RECEIVER)))
+					configureReader(writerOut, writerIn);
+				else throw new IllegalStateException("The provided ClientType '" + clientType + "' isn't supported.");
 			}
 			catch (SocketException e) {
-				clientState = INVALID;
 				broadcast(
 						new MessageBuilder().setTimestamp(Instant.now()).setBody(
 								"User '" + this.getClientName() + "' has disconnected.").setSender("").createMessage()
 				);
+				clientState = INVALID;
+				try {
+					disconnect();
+				}
+				catch (IOException ex) {
+					ex.printStackTrace();
+				}
 				
 			}
 			catch (IOException e) {
@@ -131,32 +147,32 @@ public class Server {
 			}
 		}
 		
-		private void startParticipation(BufferedReader writerIn, PrintWriter receiverOut) throws IOException {
-			String message;
-			while (!getWriterSocket().isClosed() && !getReceiverSocket().isClosed()) {
-				message = writerIn.readLine();
-				switch (getHeader(message)) {
-					case MESSAGE:
-						broadcast(new MessageBuilder().setBody(decodeMessage(message))
-								.setSender(this.getClientName()).setTimestamp(Instant.now()).createMessage());
-						break;
-					case DISCONNECT:
-						disconnect();
-						break;
-				}
-			}
-		}
+//		private void startParticipation(BufferedReader writerIn, PrintWriter receiverOut) throws IOException {
+//			String message;
+//			while (!getWriterSocket().isClosed() && !getReceiverSocket().isClosed()) {
+//				message = writerIn.readLine();
+//				switch (getHeader(message)) {
+//					case MESSAGE:
+//						broadcast(new MessageBuilder().setBody(decodeMessage(message))
+//								.setSender(this.getClientName()).setTimestamp(Instant.now()).createMessage());
+//						break;
+//					case DISCONNECT:
+//						disconnect();
+//						break;
+//				}
+//			}
+//		}
 		
 		//<editor-fold desc="Configuration methods">
 		private void configure(ClientType clientType, PrintWriter out, BufferedReader in) throws IOException {
-			if (clientType.equals(ClientType.WRITER))
+			if (clientType.equals(WRITER))
 				configureWriter(out, in);
-			else if (clientType.equals((ClientType.RECEIVER)))
+			else if (clientType.equals((RECEIVER)))
 				configureReader(out, in);
 			else throw new IllegalStateException("The provided ClientType '" + clientType + "' isn't supported.");
 		}
 		
-		private void configureReader(PrintWriter out, BufferedReader in) throws IOException {
+		private ClientHandler configureReader(PrintWriter out, BufferedReader in) throws IOException {
 			int providedKey = Integer.parseInt(negotiate(PROVIDE_REG_KEY, REG_KEY, out, in));
 			ClientHandler handlerForKey = null;
 			synchronized (clientHandles) {
@@ -166,7 +182,7 @@ public class Server {
 			}
 			if (handlerForKey == null) {
 				out.println(REG_KEY_REJECTED);
-				configureReader(out, in);
+				return configureReader(out, in);
 			}
 			out.println(CONTINUE);
 			handlerForKey.clientState = CONNECTED;
@@ -179,16 +195,17 @@ public class Server {
 			//remove this from the clients list as this is not a unique client but a receiver
 			Collections.synchronizedList(clientHandles).remove(this);
 			//Invite the handler for this client to start participating
-			handlerForKey.allowParticipation();
+			return handlerForKey;
 		}
 		
-		private void configureWriter(PrintWriter out, BufferedReader in) throws IOException {
+		private ClientHandler configureWriter(PrintWriter out, BufferedReader in) throws IOException {
 			this.clientName = negotiate(PROVIDE_CLIENT_NAME, CLIENT_NAME, out, in);
 			synchronized (clientHandles) {
 				this.clientRegistrationKey = getNewRegKey(clientHandles);
 			}
 			this.clientState = REGISTERED;
 			out.println("Run ClientWindow.main() and enter " + clientRegistrationKey + " when prompted.");
+			return this;
 		}
 		//</editor-fold>
 		
@@ -201,19 +218,21 @@ public class Server {
 		
 		public void disconnect() throws IOException {
 			this.clientState = DISCONNECTED;
+			this.writerOut.println(DISCONNECT);
+			this.receiverOut.println(DISCONNECT);
 			this.writerSocket.close();
 			this.receiverSocket.close();
 		}
 		
-		public void allowParticipation() throws IOException {
-			if (writerIn != null && receiverOut != null) {
-				startParticipation(writerIn, receiverOut);
-			}
-			else {
-				this.clientState = INVALID;
-				disconnect();
-			}
-		}
+//		private void allowParticipation() throws IOException {
+//			if (writerIn != null && receiverOut != null) {
+//				startParticipation(writerIn, receiverOut);
+//			}
+//			else {
+//				this.clientState = INVALID;
+//				disconnect();
+//			}
+//		}
 		
 		public void broadcast(Message message) {
 			Collections.synchronizedList(messages).add(message);
@@ -233,6 +252,35 @@ public class Server {
 		
 		public void receiveMessage(Message message) throws JsonProcessingException {
 			getReceiverOut().println(msg(SHARED_MAPPER.writeValueAsString(message)));
+		}
+		
+		public void startWhenReady() throws IOException {
+			if(clientState.equals(INVALID))
+				return;
+			//block until we are listening
+			while (!clientState.equals(LISTENING)) {}
+			//start the whole listening process
+			while (clientState.equals(LISTENING)) {
+				if (writerIn != null && receiverOut != null) {
+					String message;
+					if (!getWriterSocket().isClosed() && !getReceiverSocket().isClosed()) {
+						message = writerIn.readLine();
+						switch (getHeader(message)) {
+							case MESSAGE:
+								broadcast(new MessageBuilder().setBody(decodeMessage(message))
+										.setSender(this.getClientName()).setTimestamp(Instant.now()).createMessage());
+								break;
+							case DISCONNECT:
+								disconnect();
+								break;
+						}
+					}
+				}
+				else {
+					this.clientState = INVALID;
+					disconnect();
+				}
+			}
 		}
 		
 		public boolean isListening() {
