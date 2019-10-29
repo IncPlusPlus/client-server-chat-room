@@ -13,9 +13,6 @@ public class MiscUtils {
 		Scanner in = new Scanner(System.in);
 		String host;
 		int port;
-		//I really didn't feel like dealing with JavaFX or Swing
-		System.out.println("This window is merely for sending messages. " +
-				"To see what's going on. Run the main method of the ClientWindow class.\n");
 		System.out.print("Host: ");
 		host = in.nextLine();
 		System.out.print("Port: ");

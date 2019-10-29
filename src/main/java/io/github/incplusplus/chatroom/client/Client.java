@@ -25,6 +25,9 @@ public class Client {
 		kb = new Scanner(System.in);
 		String name;
 		enable();
+		//I really didn't feel like dealing with JavaFX or Swing
+		System.out.println("This window is merely for sending messages. " +
+				"To see what's going on. Run the main method of the ClientWindow class.\n");
 		sock = promptForSocket();
 		in = new BufferedReader(new InputStreamReader(sock.getInputStream()));
 		outToServer = new PrintWriter(sock.getOutputStream(), true);
