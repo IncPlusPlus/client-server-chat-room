@@ -9,6 +9,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
@@ -37,8 +38,9 @@ public class Server {
 		StupidSimpleLogger.enable();
 		if (serverName != null)
 			System.out.println("Server name: " + serverName);
+		socket = new ServerSocket(port);
 		start(port);
-		System.out.println("Server started on port " + port + ".");
+		System.out.println("Server started on " + InetAddress.getLocalHost().getHostAddress() + ":" + port + ".");
 		System.out.println("Hit enter to stop the server.");
 		/*
 		 * Wait for newline from user.
@@ -60,7 +62,6 @@ public class Server {
 			
 			public void run() {
 				try {
-					socket = new ServerSocket(port);
 					System.out.println("Ready and waiting!");
 					while (true) {
 						try {
@@ -73,9 +74,6 @@ public class Server {
 							log("FATAL ERROR. THE CLIENT HANDLER ENCOUNTERED AN ERROR DURING CLOSING TIME");
 						}
 					}
-				}
-				catch (IOException e) {
-					e.printStackTrace();
 				}
 				finally {
 					log("Server shutting down!");
