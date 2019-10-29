@@ -1,5 +1,6 @@
 package io.github.incplusplus.chatroom.server;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import io.github.incplusplus.chatroom.client.ClientState;
 import io.github.incplusplus.chatroom.client.ClientType;
 import io.github.incplusplus.chatroom.shared.StupidSimpleLogger;
@@ -10,12 +11,15 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
+import java.time.Instant;
 import java.util.*;
 
 import static io.github.incplusplus.chatroom.client.ClientState.*;
 import static io.github.incplusplus.chatroom.server.ServerMethods.*;
 import static io.github.incplusplus.chatroom.shared.Constants.ConstantEnum.*;
-import static io.github.incplusplus.chatroom.shared.MiscUtils.msg;
+import static io.github.incplusplus.chatroom.shared.Constants.SHARED_MAPPER;
+import static io.github.incplusplus.chatroom.shared.MiscUtils.*;
 import static io.github.incplusplus.chatroom.shared.StupidSimpleLogger.log;
 
 public class Server {
@@ -23,7 +27,7 @@ public class Server {
 	private final static int port = 1234;
 	private static String serverName = "Chatroom Server";
 	private static final List<ClientHandler> clientHandles = new ArrayList<>();
-	private static List<Message> messages = new ArrayList<>();
+	private static final List<Message> messages = new ArrayList<>();
 	
 	public static void main(String[] args) throws IOException {
 		Scanner in = new Scanner(System.in);
@@ -112,10 +116,34 @@ public class Server {
 				ClientType clientType = ClientType.valueOf(negotiate(IDENTIFY, IDENTITY, writerOut, writerIn));
 				configure(clientType, writerOut, writerIn);
 			}
+			catch (SocketException e) {
+				clientState = INVALID;
+				broadcast(
+						new MessageBuilder().setTimestamp(Instant.now()).setBody(
+								"User '" + this.getClientName() + "' has disconnected.").setSender("").createMessage()
+				);
+				
+			}
 			catch (IOException e) {
 				e.printStackTrace();
 				System.out.println("FATAL ERROR. AN ERROR ESCAPED OUT INTO THE CLIENT HANDLER'S THREAD.RUN() METHOD");
 				clientState = INVALID;
+			}
+		}
+		
+		private void startParticipation(BufferedReader writerIn, PrintWriter receiverOut) throws IOException {
+			String message;
+			while (!getWriterSocket().isClosed() && !getReceiverSocket().isClosed()) {
+				message = writerIn.readLine();
+				switch (getHeader(message)) {
+					case MESSAGE:
+						broadcast(new MessageBuilder().setBody(decodeMessage(message))
+								.setSender(this.getClientName()).setTimestamp(Instant.now()).createMessage());
+						break;
+					case DISCONNECT:
+						disconnect();
+						break;
+				}
 			}
 		}
 		
@@ -147,9 +175,11 @@ public class Server {
 			
 			//attach this reader to the existing writer
 			//calling the getWriter*() methods because this is initially assumed to be a writer
-			handlerForKey.attachReceiver(getWriterSocket(),getWriterOut(),getWriterIn());
+			handlerForKey.attachReceiver(getWriterSocket(), getWriterOut(), getWriterIn());
 			//remove this from the clients list as this is not a unique client but a receiver
 			Collections.synchronizedList(clientHandles).remove(this);
+			//Invite the handler for this client to start participating
+			handlerForKey.allowParticipation();
 		}
 		
 		private void configureWriter(PrintWriter out, BufferedReader in) throws IOException {
@@ -166,6 +196,47 @@ public class Server {
 			this.receiverSocket = receiverSocket;
 			this.receiverOut = receiverOut;
 			this.receiverIn = receiverIn;
+			this.clientState = LISTENING;
+		}
+		
+		public void disconnect() throws IOException {
+			this.clientState = DISCONNECTED;
+			this.writerSocket.close();
+			this.receiverSocket.close();
+		}
+		
+		public void allowParticipation() throws IOException {
+			if (writerIn != null && receiverOut != null) {
+				startParticipation(writerIn, receiverOut);
+			}
+			else {
+				this.clientState = INVALID;
+				disconnect();
+			}
+		}
+		
+		public void broadcast(Message message) {
+			Collections.synchronizedList(messages).add(message);
+			synchronized (clientHandles) {
+				clientHandles.stream()
+						.filter(ClientHandler::isListening)
+						.forEach(clientHandler -> {
+							try {
+								clientHandler.receiveMessage(message);
+							}
+							catch (JsonProcessingException e) {
+								e.printStackTrace();
+							}
+						});
+			}
+		}
+		
+		public void receiveMessage(Message message) throws JsonProcessingException {
+			getReceiverOut().println(msg(SHARED_MAPPER.writeValueAsString(message)));
+		}
+		
+		public boolean isListening() {
+			return getClientState().equals(LISTENING);
 		}
 		
 		//<editor-fold desc="Getters">

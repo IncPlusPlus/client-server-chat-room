@@ -1,5 +1,10 @@
 package io.github.incplusplus.chatroom.shared;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
 import io.github.incplusplus.chatroom.client.ClientType;
 
 /**
@@ -13,6 +18,18 @@ public class Constants {
 	 */
 	//  :) I love the bell character
 	final static char HEADER_SEPARATOR = (char) 7;
+	/**
+	 * This is the string that will be typed into the client
+	 * by a user to tell the client to disconnect itself
+	 * from the server.
+	 */
+	public final static String QUIT_STRING = "/q";
+	
+	public final static ObjectMapper SHARED_MAPPER = new ObjectMapper()
+//			.registerModule(new ParameterNamesModule())
+//			.registerModule(new Jdk8Module())
+			.registerModule(new JavaTimeModule())
+			.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
 	
 	/**
 	 * This enum contains values that are processed by the server
@@ -81,6 +98,11 @@ public class Constants {
 		 * Continue with registration flow.
 		 */
 		CONTINUE,
+		/**
+		 * This tells the server to kill off the
+		 * client connections.
+		 */
+		DISCONNECT,
 		/**
 		 * Indicates that this is to be treated as a
 		 * regular chat message from a client.

@@ -1,6 +1,6 @@
 package io.github.incplusplus.chatroom.client;
 
-import io.github.incplusplus.chatroom.shared.Constants;
+import io.github.incplusplus.chatroom.server.Message;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -11,9 +11,9 @@ import java.util.Scanner;
 
 import static io.github.incplusplus.chatroom.client.VariousConnectionMethods.makeFirstContact;
 import static io.github.incplusplus.chatroom.client.VariousConnectionMethods.registerReceiver;
-import static io.github.incplusplus.chatroom.shared.Constants.ConstantEnum.REG_KEY;
-import static io.github.incplusplus.chatroom.shared.MiscUtils.msg;
-import static io.github.incplusplus.chatroom.shared.MiscUtils.promptForSocket;
+import static io.github.incplusplus.chatroom.shared.Constants.ConstantEnum.*;
+import static io.github.incplusplus.chatroom.shared.Constants.SHARED_MAPPER;
+import static io.github.incplusplus.chatroom.shared.MiscUtils.*;
 import static io.github.incplusplus.chatroom.shared.StupidSimpleLogger.enable;
 import static io.github.incplusplus.chatroom.shared.StupidSimpleLogger.log;
 
@@ -34,8 +34,18 @@ public class ClientWindow {
 		makeFirstContact(sock, outToServer, in, ClientType.RECEIVER);
 		registerReceiver(kb, outToServer, in);
 		System.out.println("Connected! Messages from you and others will appear below.");
-		while (true) {
-			log(in.readLine());
+		String lineFromServer;
+		while (!sock.isClosed()) {
+			lineFromServer = in.readLine();
+			if (getHeader(lineFromServer).equals(DISCONNECT)) {
+				in.close();
+				outToServer.close();
+				sock.close();
+			}
+			else if (getHeader(lineFromServer).equals(MESSAGE)) {
+				Message m = SHARED_MAPPER.readValue(decodeMessage(lineFromServer), Message.class);
+				log(m.toString());
+			}
 		}
 	}
 }

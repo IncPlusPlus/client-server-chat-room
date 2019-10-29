@@ -8,6 +8,8 @@ import java.net.Socket;
 import java.util.Scanner;
 
 import static io.github.incplusplus.chatroom.client.VariousConnectionMethods.makeFirstContact;
+import static io.github.incplusplus.chatroom.shared.Constants.ConstantEnum.DISCONNECT;
+import static io.github.incplusplus.chatroom.shared.Constants.QUIT_STRING;
 import static io.github.incplusplus.chatroom.shared.MiscUtils.msg;
 import static io.github.incplusplus.chatroom.shared.MiscUtils.promptForSocket;
 import static io.github.incplusplus.chatroom.shared.StupidSimpleLogger.enable;
@@ -31,9 +33,17 @@ public class Client {
 		name = kb.nextLine();
 		System.out.println("Connecting...");
 		makeFirstContact(sock, outToServer, in, ClientType.WRITER, name);
+		String messageToSend;
 		log(in.readLine());
-		while (true) {
-			outToServer.println(msg(kb.nextLine()));
+		while (!sock.isClosed()) {
+			messageToSend=kb.nextLine();
+			if (messageToSend.equals(QUIT_STRING)) {
+				outToServer.println(DISCONNECT);
+				sock.close();
+			}
+			else {
+				outToServer.println(msg(messageToSend));
+			}
 		}
 	}
 }

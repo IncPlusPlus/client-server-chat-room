@@ -66,15 +66,23 @@ public class VariousConnectionMethods {
 		if (fromServer == null || !getHeader(fromServer).equals(PROVIDE_REG_KEY)) {
 			throw new IllegalStateException("The server failed to ask for client registration key upon contact!");
 		}
+		supplyRegKey(kb, outToServer, in);
+	}
+	
+	public static void supplyRegKey(Scanner kb, PrintWriter outToServer, BufferedReader in) throws IOException {
+		String fromServer;
 		System.out.print("Registration key: ");
 		outToServer.println(msg(kb.nextLine(), REG_KEY));
 		fromServer = in.readLine();
-		if(fromServer == null || !getHeader(fromServer).equals(CONTINUE)) {
+		if(fromServer == null) {
 			throw new IllegalStateException("The server failed to acknowledge client registration key message!");
 		}
 		if(getHeader(fromServer).equals(REG_KEY_REJECTED)) {
 			System.out.println("That key was not recognized by the server. Try again.");
-			registerReceiver(kb, outToServer, in);
+			supplyRegKey(kb, outToServer, in);
+		}
+		if(!getHeader(fromServer).equals(CONTINUE)) {
+			throw new IllegalStateException("The server failed to acknowledge client registration key message!");
 		}
 	}
 }
