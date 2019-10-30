@@ -92,7 +92,7 @@ public class Server {
 		private PrintWriter receiverOut;
 		private BufferedReader writerIn;
 		private BufferedReader receiverIn;
-		private ClientState clientState;
+		private volatile ClientState clientState;
 		private String clientName;
 		private UUID clientUUID;
 		private int clientRegistrationKey;
@@ -233,14 +233,7 @@ public class Server {
 			if (clientState.equals(INVALID))
 				return;
 			//block until we are listening
-			ClientState localClientState = getClientState();
-			while (!localClientState.equals(LISTENING)) {
-				//I would leave this loop empty but for some reason
-				//putting methods here is the only thing that makes this work
-				//outside of my IDE
-				Thread.sleep(1000);
-				localClientState = getClientState();
-			}
+			while (!clientState.equals(LISTENING)) {}
 			//broadcast that the user has fully connected
 			broadcast(
 					new MessageBuilder().setTimestamp(Instant.now()).setBody(
