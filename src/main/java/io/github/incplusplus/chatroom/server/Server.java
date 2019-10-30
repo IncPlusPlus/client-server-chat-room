@@ -206,8 +206,42 @@ public class Server {
 			this.receiverOut.println(DISCONNECT);
 			this.writerSocket.close();
 			this.receiverSocket.close();
+			broadcast(
+					new MessageBuilder().setTimestamp(Instant.now()).setBody(
+							"User '" + this.getClientName() + "' has disconnected.").setSender("").createMessage()
+			);
 		}
 		
+		/**
+		 * Broadcast a message to all clients except that
+		 * with the specified UUID.
+		 * @param message the message to broadcast
+		 * @param uuid the UUID of the client to exclude
+		 *             from this broadcast
+		 */
+		public void broadcastExcept(Message message, UUID uuid) {
+			Collections.synchronizedList(messages).add(message);
+			log(message.toString());
+			synchronized (clientHandles) {
+				clientHandles.stream()
+						.filter(ClientHandler::isListening)
+						.filter(clientHandler -> !clientHandler.getClientUUID().equals(uuid))
+						.forEach(clientHandler -> {
+							try {
+								clientHandler.receiveMessage(message);
+							}
+							catch (JsonProcessingException e) {
+								e.printStackTrace();
+							}
+						});
+			}
+			
+		}
+		
+		/**
+		 * Broadcast a message to all clients
+		 * @param message the message to broadcast
+		 */
 		public void broadcast(Message message) {
 			Collections.synchronizedList(messages).add(message);
 			log(message.toString());
@@ -235,10 +269,17 @@ public class Server {
 			//block until we are listening
 			while (!clientState.equals(LISTENING)) {}
 			//broadcast that the user has fully connected
-			broadcast(
+			broadcastExcept(
 					new MessageBuilder().setTimestamp(Instant.now()).setBody(
-							"User '" + this.getClientName() + "' has connected.").setSender("").createMessage()
+							"User '" + this.getClientName() + "' has connected.").setSender("").createMessage(),
+					getClientUUID()
 			);
+			//get the new client up to speed
+			synchronized (messages) {
+				for (Message m : messages) {
+					receiveMessage(m);
+				}
+			}
 			//start the whole listening process
 			while (clientState.equals(LISTENING)) {
 				if (writerIn != null && receiverOut != null) {
