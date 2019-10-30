@@ -1,7 +1,8 @@
 package io.github.incplusplus.chatroom.shared;
 
 import java.io.IOException;
-import java.net.Socket;
+import java.net.*;
+import java.util.Enumeration;
 import java.util.Scanner;
 import java.util.SplittableRandom;
 
@@ -85,5 +86,15 @@ public class MiscUtils {
 	
 	public static int randInt(int lowerBoundInclusive, int upperBoundInclusive) {
 		return new SplittableRandom().nextInt(lowerBoundInclusive, upperBoundInclusive + 1);
+	}
+	
+	/**
+	 * Credit to https://stackoverflow.com/a/38342964 for this elegant solution
+	 */
+	public static String getIp() throws SocketException, UnknownHostException {
+		try(final DatagramSocket socket = new DatagramSocket()){
+			socket.connect(InetAddress.getByName("8.8.8.8"), 10002);
+			return socket.getLocalAddress().getHostAddress();
+		}
 	}
 }

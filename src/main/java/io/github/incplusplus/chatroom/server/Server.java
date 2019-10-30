@@ -40,7 +40,7 @@ public class Server {
 			System.out.println("Server name: " + serverName);
 		socket = new ServerSocket(port);
 		start(port);
-		System.out.println("Server started on " + InetAddress.getLocalHost().getHostAddress() + ":" + port + ".");
+		System.out.println("Server started on " + getIp() + ":" + port + ".");
 		System.out.println("Hit enter to stop the server.");
 		/*
 		 * Wait for newline from user.
