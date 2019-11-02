@@ -66,6 +66,7 @@ public class Server {
 					while (true) {
 						try {
 							ClientHandler ch = new ClientHandler(socket.accept());
+							//TODO: Fix the improper usage of synchronizedList, you dolt!
 							Collections.synchronizedList(clientHandles).add(ch);
 							ch.start();
 						}
@@ -173,6 +174,7 @@ public class Server {
 			//calling the getWriter*() methods because this is initially assumed to be a writer
 			handlerForKey.attachReceiver(getWriterSocket(), getWriterOut(), getWriterIn());
 			//remove this from the clients list as this is not a unique client but a receiver
+			//TODO: Fix the improper usage of synchronizedList, you dolt!
 			Collections.synchronizedList(clientHandles).remove(this);
 			//Invite the handler for this client to start participating
 			return handlerForKey;
@@ -220,6 +222,7 @@ public class Server {
 		 *             from this broadcast
 		 */
 		public void broadcastExcept(Message message, UUID uuid) {
+			//TODO: Fix the improper usage of synchronizedList, you dolt!
 			Collections.synchronizedList(messages).add(message);
 			log(message.toString());
 			synchronized (clientHandles) {
@@ -243,6 +246,7 @@ public class Server {
 		 * @param message the message to broadcast
 		 */
 		public void broadcast(Message message) {
+			//TODO: Fix the improper usage of synchronizedList, you dolt!
 			Collections.synchronizedList(messages).add(message);
 			log(message.toString());
 			synchronized (clientHandles) {
